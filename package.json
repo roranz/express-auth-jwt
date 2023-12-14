@@ -1,0 +1,26 @@
+{
+	"name": "express-dic2023",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "Another test that's gonna die in some hours",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node --env-file=.env src/index.js",
+		"dev": "npx nodemon --env-file=.env src/index.js"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@prisma/client": "^5.7.0",
+		"bcrypt": "^5.1.1",
+		"cookie-parser": "^1.4.6",
+		"express": "^4.18.2",
+		"jsonwebtoken": "^9.0.2",
+		"nodemon": "^3.0.2"
+	},
+	"devDependencies": {
+		"eslint": "^8.55.0",
+		"prisma": "^5.7.0"
+	}
+}
