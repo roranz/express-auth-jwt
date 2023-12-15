@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import { login, refresh } from './controller/auth.js';
+import { login, logout, refresh } from './controller/auth.js';
 import { createUser, deleteUser, getAllUsers, getUserByEmail, getUserById, updateUser } from './controller/users.js';
 import { authenticate } from './utils/auth.js';
 import { getErrorMessage } from './utils/error.js';
@@ -51,10 +51,13 @@ app.put('/users/:id', authenticate, updateUser);
 app.delete('/users/:id', authenticate, deleteUser);
 
 // login route
-app.post('/login', login);
+app.post('/auth/login', login);
+
+// login route
+app.post('/auth/logout', logout);
 
 // refresh route
-app.post('/refresh', refresh);
+app.post('/auth/refresh', refresh);
 // start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

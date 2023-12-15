@@ -25,7 +25,7 @@ export async function login(req, res) {
 				return res.status(200).send('');
 			}
 		} catch {
-			console.error('errore nel db');
+			console.error('Db error!');
 		}
 	}
 
@@ -49,7 +49,7 @@ export async function login(req, res) {
 	const refreshToken = await createRefreshToken(user.id);
 	console.log(refreshToken);
 	res
-		.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: ms('refreshTokenDuration'), path: '/refresh' })
+		.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: ms('refreshTokenDuration'), path: '/auth' })
 		.header('Authorization', generatedToken)
 		.send({ id: user.id, name: user.name, email: user.email });
 }
@@ -77,6 +77,8 @@ export async function refresh(req, res) {
 				},
 			});
 			console.log('Refresh token deleted!');
+		} else {
+			return res.status(400).send('Invalid refresh token.');
 		}
 
 		let newRefreshToken;
@@ -88,9 +90,42 @@ export async function refresh(req, res) {
 		}
 		const accessToken = token(decoded.userId, accessTokenDuration);
 		res
-			.cookie('refreshToken', newRefreshToken, { httpOnly: true, sameSite: 'strict', maxAge: ms('refreshTokenDuration'), path: '/refresh' })
+			.cookie('refreshToken', newRefreshToken, { httpOnly: true, sameSite: 'strict', maxAge: ms('refreshTokenDuration'), path: '/auth' })
 			.header('Authorization', accessToken)
 			.send(decoded.user);
+	} catch (error) {
+		return res.status(400).send('Invalid refresh token.');
+	}
+}
+
+export async function logout(req, res) {
+	const refreshToken = req.cookies['refreshToken'];
+
+	if (!refreshToken) {
+		return res.status(401).send('Access Denied. No refresh token provided.');
+	}
+
+	try {
+		await verify(refreshToken);
+
+		const dbToken = await prisma.refreshToken.findUnique({
+			where: {
+				token: refreshToken,
+			},
+		});
+
+		if (dbToken) {
+			await prisma.refreshToken.deleteMany({
+				where: {
+					id: dbToken.id,
+				},
+			});
+			console.log('Refresh token deleted!');
+		} else {
+			return res.status(400).send('Invalid refresh token.');
+		}
+
+		return res.clearCookie('refreshToken').send('Logout successful!').end();
 	} catch (error) {
 		return res.status(400).send('Invalid refresh token.');
 	}
