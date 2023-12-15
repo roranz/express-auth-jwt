@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
+import { refresh } from '../controller/auth.js';
 const secretKey = process.env.JWT_KEY;
 
 export function authenticate(req, res, next) {
 	const accessToken = req.headers ? req.headers['authorization'] : null;
 	const refreshToken = req.cookies ? req.cookies['refreshToken'] : null;
 
-	if (!accessToken) {
+	if (!accessToken && !refreshToken) {
 		return res.status(401).send('Access Denied. No token provided.');
 	}
 
@@ -19,10 +20,7 @@ export function authenticate(req, res, next) {
 		}
 
 		try {
-			const decoded = jwt.verify(refreshToken, secretKey);
-			const accessToken = jwt.sign({ user: decoded.user }, secretKey, { expiresIn: '1h' });
-
-			res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' }).header('Authorization', accessToken).send(decoded.user);
+			refresh(req, res);
 		} catch (error) {
 			return res.status(400).send('Invalid Token.');
 		}

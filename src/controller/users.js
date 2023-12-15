@@ -2,17 +2,18 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../index.js';
 import { getErrorMessage } from '../utils/error.js';
 
-export const getAllUsers = async (req, res) => {
+export async function getAllUsers(req, res) {
 	try {
 		let users = await prisma.user.findMany();
-		//users = users.map(user => {return { id: user.id, name: user.name, email: user.email };});
-		res.status(200).json(users);
+		let refreshTokens = await prisma.refreshToken.findMany();
+		//users = users.map(user{return { id: user.id, name: user.name, email: user.email };});
+		res.status(200).json(users, refreshTokens);
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}
 
-export const getUserById = async (req, res) => {
+export async function getUserById(req, res) {
 	try {
 		const user = await prisma.user.findUnique({
 			where: {
@@ -23,9 +24,9 @@ export const getUserById = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}
 
-export const getUserByEmail = async (req, res) => {
+export async function getUserByEmail(req, res) {
 	try {
 		const user = await prisma.user.findUnique({
 			where: {
@@ -36,9 +37,9 @@ export const getUserByEmail = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}
 
-export const createUser = async (req, res) => {
+export async function createUser(req, res) {
 	const password = await bcrypt.hash(req.body.password, 10);
 	try {
 		const user = await prisma.user.create({
@@ -52,9 +53,9 @@ export const createUser = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}
 
-export const updateUser = async (req, res) => {
+export async function updateUser(req, res) {
 	const password = await bcrypt.hash(req.body.password, 10);
 	try {
 		const user = await prisma.user.update({
@@ -71,9 +72,9 @@ export const updateUser = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}
 
-export const deleteUser = async (req, res) => {
+export async function deleteUser(req, res) {
 	try {
 		const user = await prisma.user.delete({
 			where: {
@@ -84,4 +85,4 @@ export const deleteUser = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: getErrorMessage(error) });
 	}
-};
+}

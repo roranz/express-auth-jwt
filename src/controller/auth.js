@@ -8,7 +8,7 @@ const refreshTokenDuration = process.env.REFRESH_TOKEN_DURATION;
 const accessTokenDuration = process.env.ACCESS_TOKEN_DURATION;
 const saltRounds = process.env.BCRYPT_SALT_ROUNDS;
 
-export const login = async (req, res) => {
+export async function login(req, res) {
 	const email = req.body.email;
 	const password = req.body.password;
 	const accessToken = req.headers ? req.headers['authorization'] : null;
@@ -21,7 +21,7 @@ export const login = async (req, res) => {
 			const userId = decoded.userId;
 			const userToVerify = await prisma.user.findUnique({ where: { email: email } });
 			if (userId == userToVerify.id) {
-				console.log('già loggato!', userToVerify);
+				console.log('User already logged in with a valid Token!', userToVerify.id);
 				return res.status(200).send('');
 			}
 		} catch {
@@ -52,9 +52,9 @@ export const login = async (req, res) => {
 		.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: ms('refreshTokenDuration'), path: '/refresh' })
 		.header('Authorization', generatedToken)
 		.send({ id: user.id, name: user.name, email: user.email });
-};
+}
 
-export const refresh = async (req, res) => {
+export async function refresh(req, res) {
 	const refreshToken = req.cookies['refreshToken'];
 
 	if (!refreshToken) {
@@ -71,17 +71,18 @@ export const refresh = async (req, res) => {
 		});
 
 		if (dbToken) {
-			await prisma.refreshToken.delete({
+			await prisma.refreshToken.deleteMany({
 				where: {
 					id: dbToken.id,
 				},
 			});
+			console.log('Refresh token deleted!');
 		}
 
 		let newRefreshToken;
 		try {
-			newRefreshToken = createRefreshToken(decoded.userId);
-			console.log('generata e dbbata');
+			newRefreshToken = await createRefreshToken(decoded.userId);
+			console.log('Refresh token generated and pushed on db!');
 		} catch {
 			return res.status(500);
 		}
@@ -93,9 +94,9 @@ export const refresh = async (req, res) => {
 	} catch (error) {
 		return res.status(400).send('Invalid refresh token.');
 	}
-};
+}
 
-export const createRefreshToken = async userId => {
+async function createRefreshToken(userId) {
 	const rftoken = token(userId, refreshTokenDuration);
 	const encryptedToken = await bcrypt.hash(rftoken, Number(saltRounds));
 	const validUntil = new Date(new Date().getTime() + ms(refreshTokenDuration));
@@ -110,4 +111,4 @@ export const createRefreshToken = async userId => {
 		},
 	});
 	return rftoken;
-};
+}
